@@ -1,0 +1,119 @@
+#!/usr/bin/env ruby
+
+if defined?(Bundler) && !defined?(Bundler::ORIGINAL_ENV)
+  require "bundler/setup"
+  Bundler::ORIGINAL_ENV = ENV.to_h
+end
+
+require "fast_mcp"
+require "rack"
+require "rack/handler/puma"
+require "puma"
+require "puma/configuration"
+require "puma/launcher"
+require_relative "../lib/nvim_mcp_server"
+
+if ARGV[0] == "version"
+  puts "Neovim MCP Server version #{NvimMcpServer::VERSION}"
+  exit 0
+end
+
+# Help message
+if ARGV[0] == "--help" || ARGV[0] == "-h"
+  puts "Neovim MCP Server - MCP protocol server"
+  puts ""
+  puts "Start your Neovim with --listen to allow Remote Procedure Calls"
+  puts "Example:"
+  puts "    nvim --listen /tmp/nvim-neovim.sock"
+  puts ""
+  puts "Usage: #{File.basename($0)} [options]"
+  puts ""
+  puts "Options:"
+  puts "  --log-level LEVEL      Log level: debug, info, warn, error (default: info)"
+  puts "  --mode MODE            Server mode: http or stdio (default: stdio)"
+  puts "  -p, --port PORT        Port to listen on (default: 6030)"
+  puts "  version                Display version information"
+  puts "  --help, -h             Display this help message"
+  puts ""
+  puts "Example:"
+  puts "  #{File.basename($0)} --log-level debug -p 6060"
+  puts "  #{File.basename($0)} --mode stdio"
+  exit 0
+end
+
+# Default values
+port = 6030
+mode = "stdio"
+
+# Parse command-line arguments
+i = 0
+while i < ARGV.length
+  case ARGV[i]
+  when "--log-level"
+    log_level = ARGV[i + 1].to_sym
+    i += 2
+  when "-p", "--port"
+    port = ARGV[i + 1].to_i
+    i += 2
+  when "--mode"
+    mode = ARGV[i + 1].downcase
+    unless ["http", "stdio"].include?(mode) # rubocop:disable Performance/CollectionLiteralInLoop
+      puts "Error: Invalid mode '#{mode}'. Must be 'http' or 'stdio'."
+      exit 1
+    end
+    i += 2
+  else
+    i += 1
+  end
+end
+
+NvimMcpServer.config do |config|
+  config.log_level = log_level
+end
+
+NvimMcpServer.log(:info, "Starting Neovim MCP Server in #{mode} mode...")
+
+# Create tools configuration for both modes
+def setup_mcp_tools(server)
+  server.register_tools(NvimMcpServer::GetProjectBuffersTool)
+end
+
+case mode
+when "http"
+  puts "Starting Rack application with MCP middleware on http://localhost:#{port}"
+  puts "MCP endpoints:"
+  puts "  - http://localhost:#{port}/mcp/sse (SSE endpoint)"
+  puts "  - http://localhost:#{port}/mcp/messages (JSON-RPC endpoint)"
+  puts ""
+  puts "Version #{NvimMcpServer::VERSION}"
+  puts ""
+
+  rack_app = ->(env) {
+    [200, {"Content-Type" => "text/plain"}, ["Rails MCP Server #{NvimMcpServer::VERSION}"]]
+  }
+
+  mcp_app = FastMcp.rack_middleware(
+    rack_app,
+    name: "nvim-mcp-server", version: NvimMcpServer::VERSION,
+    logger: NvimMcpServer.logger
+  ) { |server| setup_mcp_tools(server) }
+
+  app = Rack::Builder.new { run mcp_app }
+  config = Puma::Configuration.new do |user_config|
+    user_config.bind "tcp://localhost:#{port}"
+    user_config.app app
+  end
+
+  launcher = Puma::Launcher.new(config)
+  launcher.run
+when "stdio"
+  NvimMcpServer.log(:info, "Starting MCP server in STDIO mode...")
+
+  server = FastMcp::Server.new(name: "nvim-mcp-server", version: NvimMcpServer::VERSION)
+  setup_mcp_tools(server)
+
+  server.start
+end
+
+NvimMcpServer.log(:info, "Stopping Neovim MCP Server...")
+exit
