@@ -5,6 +5,7 @@ require_relative "nvim-mcp-server/version"
 require_relative "nvim-mcp-server/config"
 require_relative "nvim-mcp-server/tools/base_tool"
 require_relative "nvim-mcp-server/tools/get_project_buffers_tool"
+require_relative "nvim-mcp-server/tools/update_buffer_tool"
 
 module NvimMcpServer
   @levels = {debug: Logger::DEBUG, info: Logger::INFO, error: Logger::ERROR}

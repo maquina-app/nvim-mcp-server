@@ -12,6 +12,7 @@ This Neovim MCP Server implements the MCP specification to give AI models access
 
 - Connect to running Neovim instances
 - Query buffers across multiple Neovim sessions
+- Update and save buffers with new content
 - Follow the Model Context Protocol standard
 - Seamless integration with LLM clients
 
@@ -30,7 +31,6 @@ After installation, the `nvim-mcp-server` executable will be available in your P
 The Neovim MCP Server follows the XDG Base Directory Specification for configuration files:
 
 - On macOS: `$XDG_CONFIG_HOME/nvim-mcp` or `~/.config/nvim-mcp` if XDG_CONFIG_HOME is not set
-- On Linux: `$XDG_CONFIG_HOME/nvim-mcp` or `~/.config/nvim-mcp` if XDG_CONFIG_HOME is not set
 - On Windows: `%APPDATA%\nvim-mcp`
 
 The server will automatically create these directories and a log file the first time it runs.
@@ -77,12 +77,10 @@ The Neovim MCP Server can be used with Claude Desktop by manually configuring th
 
 1. Create the appropriate config directory for your platform:
    - macOS: `$XDG_CONFIG_HOME/nvim-mcp` or `~/.config/nvim-mcp` if XDG_CONFIG_HOME is not set
-   - Linux: `$XDG_CONFIG_HOME/nvim-mcp` or `~/.config/nvim-mcp` if XDG_CONFIG_HOME is not set
    - Windows: `%APPDATA%\nvim-mcp`
 
 2. Find or create the Claude Desktop configuration file:
    - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Linux: `~/.config/Claude/claude_desktop_config.json`
    - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 3. Add or update the MCP server configuration:
@@ -196,6 +194,30 @@ I'd like to know what files I'm currently working on in the "blog" project.
 
 ```
 List all the buffers for the "nvim-mcp-server" project.
+```
+
+### 2. `update_buffer`
+
+**Description:** Updates a buffer with new content provided by the MCP client, saves it to disk, and reloads it. This tool connects to a running Neovim instance, replaces the entire buffer content with the provided content, writes it to disk, and then reloads the buffer. This is useful for applying external changes (like from an AI assistant) to files open in Neovim.
+
+**Parameters:**
+
+- `project_name`: (String, required) The name of the project directory. This is used to locate the Neovim socket at /tmp/nvim-{project_name}.sock.
+- `file_path`: (String, required) The absolute or relative file path of the buffer to update. This should match the path as shown in Neovim's buffer list.
+- `content`: (String, required) The new content to write to the buffer. This will replace the entire current content of the buffer.
+
+#### Examples
+
+```
+Please update the file "src/main.rb" in my "my-project" Neovim instance with the refactored code.
+```
+
+```
+Replace the content of "/home/user/projects/blog/app/controllers/posts_controller.rb" in the "blog" project with the updated controller code.
+```
+
+```
+Update the README.md file in the "nvim-mcp-server" project with the new documentation.
 ```
 
 ## Testing and Debugging

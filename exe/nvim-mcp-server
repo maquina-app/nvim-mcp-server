@@ -75,7 +75,7 @@ NvimMcpServer.log(:info, "Starting Neovim MCP Server in #{mode} mode...")
 
 # Create tools configuration for both modes
 def setup_mcp_tools(server)
-  server.register_tools(NvimMcpServer::GetProjectBuffersTool)
+  server.register_tools(NvimMcpServer::GetProjectBuffersTool, NvimMcpServer::UpdateBufferTool)
 end
 
 case mode
