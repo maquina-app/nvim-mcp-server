@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-07-21
+
+### Added
+
+- **Network Access Support**: New `--bind-all` flag for HTTP mode to allow access from local network
+  - Binds to `0.0.0.0` instead of `localhost` when enabled
+  - Allows connections from local network IP ranges (192.168.x.x, 10.x.x.x, 172.16.x.x)
+  - Accepts connections from `.local` domain names (e.g., `my-computer.local`)
+  - Maintains security features with origin validation and IP filtering
+
+### Improved
+
+- **Security Configuration**: Enhanced allowed origins and IP configuration when using `--bind-all`
+  - Automatically configures appropriate security settings for local network access
+  - Preserves localhost-only mode by default for security
+  - Clear documentation of security implications
+
+### Changed
+
+- HTTP server binding address is now configurable via `--bind-all` flag
+- Updated help text to include new network access option
+- Fixed typo in default response text (was showing "Rails MCP Server" instead of "Neovim MCP Server")
+
 ## [0.2.0] - 2025-07-08
 
 ### Added

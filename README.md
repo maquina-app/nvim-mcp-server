@@ -53,12 +53,36 @@ nvim-mcp-server --mode http
 
 # Start in HTTP mode on a custom port
 nvim-mcp-server --mode http -p 8080
+
+# Start in HTTP mode binding to all interfaces (for local network access)
+nvim-mcp-server --mode http --bind-all
 ```
 
 When running in HTTP mode, the server provides two endpoints:
 
 - JSON-RPC endpoint: `http://localhost:<port>/mcp/messages`
 - SSE endpoint: `http://localhost:<port>/mcp/sse`
+
+### Network Access (HTTP Mode)
+
+By default, the HTTP server only binds to localhost for security. If you need to access the server from other machines on your local network (e.g., for testing with multiple devices), you can use the `--bind-all` flag:
+
+```bash
+# Allow access from any machine on your local network
+nvim-mcp-server --mode http --bind-all
+
+# With a custom port
+nvim-mcp-server --mode http --bind-all -p 8080
+```
+
+When using `--bind-all`:
+
+- The server binds to `0.0.0.0` instead of `localhost`
+- Access is allowed from local network IP ranges (192.168.x.x, 10.x.x.x, 172.16.x.x)
+- The server accepts connections from `.local` domain names (e.g., `my-computer.local`)
+- Security features remain active to prevent unauthorized access
+
+**Security Note**: Only use `--bind-all` on trusted networks. The server includes built-in security features to validate origins and IP addresses, but exposing any service to your network increases the attack surface.
 
 ### Logging Options
 
